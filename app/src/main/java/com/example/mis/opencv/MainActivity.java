@@ -17,11 +17,8 @@ import org.opencv.objdetect.CascadeClassifier;
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.SurfaceView;
 import android.view.WindowManager;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -29,27 +26,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
-import org.opencv.core.Size;
 
 public class MainActivity extends Activity implements CvCameraViewListener2 {
     private static final String TAG = "OCVSample::Activity";
 
     private CameraBridgeViewBase mOpenCvCameraView;
+/*
     private boolean              mIsJavaCamera = true;
     private MenuItem             mItemSwitchCamera = null;
+*/
 
     // Classifiers
-    private CascadeClassifier faceDetect;
-    private CascadeClassifier eyeDetect;
-
-    // Detection variables
-    private int m_AbsoluteFaceSize = 0;
-    private float m_RelativeFaceSize = 0.2f;
-    private MatOfRect faces;
-
-    public static final int JAVA_DETECTOR = 0;
-    private static final Scalar FACE_RECT_COLOR = new Scalar(0, 255, 0, 255);
-    private int m_DetectorType = JAVA_DETECTOR;
+    private CascadeClassifier faceDetect = null;
+    private CascadeClassifier eyeDetect = null;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -150,11 +139,12 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
         MatOfRect faces = new MatOfRect();
 
         // validate classifier
-        if (m_DetectorType == JAVA_DETECTOR) {
-            if (faceDetect != null)
-                faceDetect.detectMultiScale(tmp, faces);
+        if (faceDetect != null) {
+            faceDetect.detectMultiScale(tmp, faces);
+        } else {
+            Log.e(TAG, "MAIN_ACTIVITY: No face classifier loaded !");
+            return col;
         }
-        else { Log.e(TAG, "MAIN_ACTIVITY: No face classifier loaded !"); }
 
         Log.i(TAG, "Detected " + faces.toList().size() + " faces");
 
@@ -169,11 +159,12 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
             MatOfRect eyes = new MatOfRect();
 
             // validate classifier
-            if (m_DetectorType == JAVA_DETECTOR) {
-                if (eyeDetect != null)
-                    eyeDetect.detectMultiScale(roi_face_gray, eyes);
+            if (eyeDetect != null) {
+                eyeDetect.detectMultiScale(roi_face_gray, eyes);
+            } else {
+                Log.e(TAG, "MAIN_ACTIVITY: No eye classifier loaded !");
+                return col;
             }
-            else { Log.e(TAG, "MAIN_ACTIVITY: No eye classifier loaded !"); }
 
             List<Rect> eyeList = eyes.toList();
             /*for (Rect eye : eyeList) {
