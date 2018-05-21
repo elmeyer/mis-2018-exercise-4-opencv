@@ -2,6 +2,8 @@ Marques Everett Mondliwethu Mthunzi - 119119
 
 Lars Meyer - 114719
 
+A compiled apk of the app can be found in app/build/outputs/apk/debug/app-debug.apk
+
 The red nose placement proceeds as follows:
 
 1. Detect face(s) using `haarcascade_frontalface_default.xml`
