@@ -8,10 +8,12 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
+import org.opencv.core.MatOfRect;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.objdetect.CascadeClassifier;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -34,6 +36,10 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
     private CameraBridgeViewBase mOpenCvCameraView;
     private boolean              mIsJavaCamera = true;
     private MenuItem             mItemSwitchCamera = null;
+
+    // Classifiers
+    private CascadeClassifier faceDetect;
+    private CascadeClassifier eyeDetect;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -100,6 +106,15 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
     }
 
     public void onCameraViewStarted(int width, int height) {
+        /* This method is only reached once OpenCV has been initialized
+         * successfully, by calling the onManagerConnected callback and
+         * starting the camera in that. This means we're allowed to do our magic
+         * in here.
+         * Source: https://docs.opencv.org/java/3.0.0/org/opencv/android/CameraBridgeViewBase.html#enableView()
+         */
+        faceDetect = new CascadeClassifier(initAssetFile(
+                "haarcascade_frontalface_default.xml"));
+        eyeDetect = new CascadeClassifier(initAssetFile("haarcascade_eye.xml"));
     }
 
     public void onCameraViewStopped() {
@@ -119,8 +134,30 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
         Mat col  = inputFrame.rgba();
 
         Mat tmp = gray.clone();
-        Imgproc.Canny(gray, tmp, 80, 100);
-        Imgproc.cvtColor(tmp, col, Imgproc.COLOR_GRAY2RGBA, 4);
+        //Imgproc.Canny(gray, tmp, 80, 100);
+
+        // detect faces
+        MatOfRect faces = new MatOfRect();
+        faceDetect.detectMultiScale(tmp, faces);
+        Log.i(TAG, "Detected " + faces.toList().size() + " faces");
+
+        for (Rect face : faces.toList()) {
+            // DEBUG draw rectangle around face
+            Imgproc.rectangle(col, face.tl(), face.br(), new Scalar(255, 0, 0), 2);
+            // get matrix of only the face
+            Mat roi_face_gray = tmp.submat(face);
+            Mat roi_face_col = col.submat(face);
+
+            // detect eyes
+            MatOfRect eyes = new MatOfRect();
+            eyeDetect.detectMultiScale(roi_face_gray, eyes);
+
+            for (Rect eye : eyes.toList()) {
+                Imgproc.rectangle(roi_face_col, eye.tl(), eye.br(), new Scalar(0, 255, 0), 2);
+            }
+        }
+
+        // Imgproc.cvtColor(tmp, col, Imgproc.COLOR_GRAY2RGBA, 4);
 
         return col;
     }
