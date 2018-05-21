@@ -29,6 +29,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 
 public class MainActivity extends Activity implements CvCameraViewListener2 {
     private static final String TAG = "OCVSample::Activity";
@@ -108,8 +109,8 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
     public void onCameraViewStarted(int width, int height) {
         /* This method is only reached once OpenCV has been initialized
          * successfully, by calling the onManagerConnected callback and
-         * starting the camera in that. This means we're allowed to do our magic
-         * in here.
+         * starting the camera in that. This means we're allowed to load our
+         * classifiers in here.
          * Source: https://docs.opencv.org/java/3.0.0/org/opencv/android/CameraBridgeViewBase.html#enableView()
          */
         faceDetect = new CascadeClassifier(initAssetFile(
@@ -142,9 +143,9 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
         Log.i(TAG, "Detected " + faces.toList().size() + " faces");
 
         for (Rect face : faces.toList()) {
-            // DEBUG draw rectangle around face
-            Imgproc.rectangle(col, face.tl(), face.br(), new Scalar(255, 0, 0), 2);
-            // get matrix of only the face
+            /*// DEBUG draw rectangle around face
+            Imgproc.rectangle(col, face.tl(), face.br(), new Scalar(255, 0, 0), 2);*/
+            // get matrices of only the face
             Mat roi_face_gray = tmp.submat(face);
             Mat roi_face_col = col.submat(face);
 
@@ -152,8 +153,44 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
             MatOfRect eyes = new MatOfRect();
             eyeDetect.detectMultiScale(roi_face_gray, eyes);
 
-            for (Rect eye : eyes.toList()) {
+            List<Rect> eyeList = eyes.toList();
+            /*for (Rect eye : eyeList) {
+                // DEBUG draw rectangle around eye
                 Imgproc.rectangle(roi_face_col, eye.tl(), eye.br(), new Scalar(0, 255, 0), 2);
+            }*/
+
+            if (eyeList.size() >= 2) {
+                Line betweenEyes;
+                if (eyeList.get(0).x < eyeList.get(1).x) {
+                    betweenEyes = new Line(eyeList.get(0).br(), new Point(
+                            eyeList.get(1).x, eyeList.get(1).y
+                            + eyeList.get(1).height));
+                } else {
+                    betweenEyes = new Line(eyeList.get(1).br(), new Point(
+                            eyeList.get(0).x, eyeList.get(0).y
+                            + eyeList.get(0).height));
+                }
+                /*// DEBUG show line between eyes
+                Imgproc.line(roi_face_col, betweenEyes.p1(),
+                        betweenEyes.p2(), new Scalar(0, 0, 255), 2);*/
+
+                Line nose = betweenEyes.orthogonalLine();
+                /*// DEBUG show nose line
+                Imgproc.line(roi_face_col, nose.p1(), nose.mid(),
+                        new Scalar(255, 0, 0), 2);*/
+
+                /* Draw the red nose.
+                 * "Negative values [...] mean that a filled circle is to be
+                 * drawn."
+                 * (Source: https://docs.opencv.org/master/d6/d6e/group__imgproc__draw.html#gaf10604b069374903dbd0f0488cb43670)
+                 * Size of the nose was determined by trial and error based on
+                 * the width of the detected face, since basing it on the
+                 * distance between the eyes proved to be unreliable when the
+                 * eye detection was flaky.
+                 */
+                Imgproc.circle(roi_face_col, nose.mid(),
+                        (int) Math.ceil(face.width*0.12),
+                        new Scalar(255, 0, 0), -1);
             }
         }
 
