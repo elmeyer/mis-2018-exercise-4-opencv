@@ -3,7 +3,10 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/mis-2018-exercise-4-opencv.iml" filepath="$PROJECT_DIR$/mis-2018-exercise-4-opencv.iml" />
       <module fileurl="file://$PROJECT_DIR$/mis-2018-exercise-4-opencv-master.iml" filepath="$PROJECT_DIR$/mis-2018-exercise-4-opencv-master.iml" />
+      <module fileurl="file://$PROJECT_DIR$/openCVLibrary341/openCVLibrary341.iml" filepath="$PROJECT_DIR$/openCVLibrary341/openCVLibrary341.iml" />
     </modules>
   </component>
 </project>
